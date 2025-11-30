@@ -1,0 +1,5 @@
+config = {
+	packages = {
+		"cowsay",
+	},
+}
