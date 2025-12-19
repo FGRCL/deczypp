@@ -1,8 +1,12 @@
-#include <lua5.5/lua.hpp>
+#pragma once
+#include <format>
+#include <lua5.4/lua.hpp>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
 
+namespace lua {
 typedef std::variant<const char *, int> LuaKey;
 
 class Selector {
@@ -15,6 +19,7 @@ public:
 
   Selector(LuaKey key, lua_State &luaState, Selector *parent);
   Selector operator[](LuaKey key);
+  std::string getFullPath();
   template <typename T> T get() {
     push();
     T result = convert(*this, static_cast<T *>(nullptr));
@@ -49,16 +54,14 @@ template <typename T> T convert(Selector &selector, T *) {
   static_assert(false, "Lua converter is not implemented for type");
 }
 
-bool convert(Selector &selector, bool *);
-
-double convert(Selector &selector, double *);
-
-int convert(Selector &selector, int *);
-
-std::string convert(Selector &selector, std::string *);
-
 template <typename T>
 std::vector<T> convert(Selector &selector, std::vector<T> *) {
+  if (!lua_istable(&selector.luaState, -1)) {
+    throw std::runtime_error(std::format(
+        "Could not convert value at key [{}] to a vector. It is not a table",
+        selector.getFullPath()));
+  }
+
   long n = lua_rawlen(&selector.luaState, -1);
   std::vector<T> result = std::vector<T>(n);
   for (int i = 1; i <= n; i++) {
@@ -70,3 +73,12 @@ std::vector<T> convert(Selector &selector, std::vector<T> *) {
   }
   return result;
 }
+
+bool convert(Selector &selector, bool *);
+
+double convert(Selector &selector, double *);
+
+int convert(Selector &selector, int *);
+
+std::string convert(Selector &selector, std::string *);
+} // namespace lua

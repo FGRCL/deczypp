@@ -1,28 +1,49 @@
 #include "lua.hpp"
-#include <lua5.5/lua.hpp>
+#include <format>
+#include <lua5.4/lua.hpp>
+#include <stdexcept>
 #include <string>
 #include <variant>
-
-// TODO namespace
 
 template <class... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-Selector::Selector(LuaKey key, lua_State &luaState, Selector *parent)
+lua::Selector::Selector(LuaKey key, lua_State &luaState, Selector *parent)
     : key(key), parent(parent), luaState(luaState) {}
 
-Selector Selector::operator[](LuaKey key) {
+lua::Selector lua::Selector::operator[](LuaKey key) {
   return Selector(key, luaState, this);
 };
 
-void Selector::push() {
+std::string lua::Selector::getFullPath() {
+  if (parent == nullptr) {
+    return std::visit(
+        overloaded{[](int key) { return std::format("{}", key); },
+                   [](const char *key) { return std::format("{}", key); }},
+        key);
+  } else {
+    return std::visit(
+        overloaded{[this](int key) {
+                     return std::format("{}.{}", parent->getFullPath(), key);
+                   },
+                   [this](const char *key) {
+                     return std::format("{}.{}", parent->getFullPath(), key);
+                   }},
+        key);
+  }
+}
+
+void lua::Selector::push() {
   if (parent == nullptr) {
     std::visit(
-        overloaded{
-            [](int key) {}, // TODO error handling or add selector stragegy
-            [this](const char *key) { lua_getglobal(&luaState, key); }},
+        overloaded{[](int key) {
+                     throw std::runtime_error(std::format(
+                         "The first selector key cannot be an integers. Got {}",
+                         key));
+                   },
+                   [this](const char *key) { lua_getglobal(&luaState, key); }},
         key);
   } else {
     parent->push();
@@ -34,59 +55,69 @@ void Selector::push() {
   }
 }
 
-void Selector::pop() {
+void lua::Selector::pop() {
   lua_pop(&luaState, 1);
   if (parent != nullptr) {
     parent->pop();
   }
-};
+}
 
-LuaProgramResult::LuaProgramResult(lua_State &luaState) : luaState(luaState) {};
+lua::LuaProgramResult::LuaProgramResult(lua_State &luaState)
+    : luaState(luaState) {};
 
-Selector LuaProgramResult::operator[](LuaKey key) {
+lua::Selector lua::LuaProgramResult::operator[](LuaKey key) {
   return Selector(key, luaState, nullptr);
-};
+}
 
-LuaProgram::LuaProgram() : luaState(*luaL_newstate()) {}
+lua::LuaProgram::LuaProgram() : luaState(*luaL_newstate()) {}
 
-LuaProgramResult LuaProgram::execute(std::string programFile) {
+lua::LuaProgramResult lua::LuaProgram::execute(std::string programFile) {
   lua_rawlen(&luaState, -1);
   if (luaL_loadfile(&luaState, programFile.c_str()) ||
       lua_pcall(&luaState, 0, 0, 0)) {
-    exit(1); // TODO error handling
+    throw std::runtime_error("Failed to run lua program");
   }
   return LuaProgramResult(luaState);
-};
+}
 
-bool convert(Selector &selector, bool *) {
+bool lua::convert(lua::Selector &selector, bool *) {
   if (!lua_isboolean(&selector.luaState, -1)) {
-    return false; // TODO error handling
+    throw std::runtime_error(std::format(
+        "Could not convert value at key [{}] to a boolean. It is not a boolean",
+        selector.getFullPath()));
   }
   bool result = lua_toboolean(&selector.luaState, -1);
   return result;
 }
 
-double convert(Selector &selector, double *) {
+double lua::convert(lua::Selector &selector, double *) {
   int isnum;
   int result = lua_tonumberx(&selector.luaState, -1, &isnum);
   if (!isnum) {
-    return 0; // TODO error handling
+    throw std::runtime_error(
+        std::format("Could not convert value at key [{}] to a double. It is "
+                    "not a double (lua number).",
+                    selector.getFullPath()));
   }
   return result;
 }
 
-int convert(Selector &selector, int *) {
+int lua::convert(lua::Selector &selector, int *) {
   int isnum;
   int result = lua_tointegerx(&selector.luaState, -1, &isnum);
   if (!isnum) {
-    return 0; // TODO error handling
+    throw std::runtime_error(std::format("Could not convert value at key [{}] "
+                                         "to an integer. It is not an integer",
+                                         selector.getFullPath()));
   }
   return result;
 }
 
-std::string convert(Selector &selector, std::string *) {
+std::string lua::convert(lua::Selector &selector, std::string *) {
   if (!lua_isstring(&selector.luaState, -1)) {
-    return ""; // TODO error handling
+    throw std::runtime_error(std::format(
+        "Could not convert value at key [{}] to a string. It is not a string",
+        selector.getFullPath()));
   }
   std::string result = lua_tostring(&selector.luaState, -1);
   return result;
