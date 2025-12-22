@@ -5,11 +5,7 @@
 #include <filesystem>
 #include <format>
 #include <iostream>
-#include <numeric>
-#include <pwd.h>
-#include <stdexcept>
 #include <string>
-#include <unistd.h>
 #include <vector>
 #include <zypp/Capability.h>
 #include <zypp/DownloadMode.h>
@@ -81,7 +77,7 @@ void install(bool isSudo, std::vector<std::string> packages) {
     throw std::runtime_error("Failed to install packages");
   }
 
-  std::cout << "Package install successful. " << commitResult << "\n";
+  std::cout << "Package install successful.\n";
 }
 
 std::string getProblemsString(zypp::ResolverProblemList problemList) {
