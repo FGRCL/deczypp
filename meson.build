@@ -8,5 +8,7 @@ sources = [
   'configuration.cpp',
   'constants.h',
   'constants.cpp',
+  'commands.h',
+  'commands.cpp',
 ]
 executable('zyppd', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'])
