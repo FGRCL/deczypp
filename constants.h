@@ -5,6 +5,7 @@ struct Constants {
   bool devMode;
   bool isSudo;
   std::filesystem::path configDirectory;
+  std::filesystem::path configFilePath;
 };
 
 bool isSudo();

@@ -1,6 +1,9 @@
 #include "commands.h"
 #include "configuration.h"
 #include "constants.h"
+#include <cstdlib>
+#include <filesystem>
+#include <format>
 #include <iostream>
 #include <numeric>
 #include <pwd.h>
@@ -31,6 +34,8 @@ std::function<void()> parseCommand(int args, char *argv[], Constants constants,
   std::string command = argv[1];
   if (command == "install") {
     return std::bind(install, constants.isSudo, configuration.packages);
+  } else if (command == "edit") {
+    return std::bind(edit, configuration.editor, constants.configFilePath);
   } else {
     throw std::runtime_error(std::format("Command \"{}\" is unknown", command));
   }
@@ -93,4 +98,8 @@ std::string getProblemsString(zypp::ResolverProblemList problemList) {
     }
   }
   return result;
+}
+
+void edit(std::string editor, std::filesystem::path configFilePath) {
+  std::system(std::format("{} {}", editor, configFilePath.string()).c_str());
 }

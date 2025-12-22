@@ -22,5 +22,6 @@ Constants getConstants() {
   constants.isSudo = isSudo();
   constants.configDirectory =
       configDirectory(constants.devMode, constants.isSudo);
+  constants.configFilePath = constants.configDirectory / "configuration.lua";
   return constants;
 }

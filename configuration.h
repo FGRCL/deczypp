@@ -6,6 +6,7 @@
 #include <vector>
 
 struct Configuration {
+  std::string editor;
   std::vector<std::string> packages;
 };
 
