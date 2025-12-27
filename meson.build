@@ -10,5 +10,7 @@ sources = [
   'constants.cpp',
   'commands.h',
   'commands.cpp',
+  'colors.h',
+  'colors.cpp',
 ]
 executable('zyppd', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'])

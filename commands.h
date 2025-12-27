@@ -8,6 +8,8 @@
 // Command ideas
 // Add
 // Remove
+// Init
+// Unmanaged
 
 void install(bool isSudo, std::vector<std::string> packages);
 
@@ -15,3 +17,5 @@ void edit(std::string editor, std::filesystem::path configFilePath);
 
 std::function<void()> parseCommand(int args, char *argv[], Constants constants,
                                    Configuration configuration);
+
+void unmanaged();

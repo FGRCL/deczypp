@@ -1,7 +1,7 @@
+#include "colors.h"
 #include "commands.h"
 #include "configuration.h"
 #include "constants.h"
-#include <iostream>
 
 int main(int args, char *argv[]) {
   try {
@@ -11,7 +11,7 @@ int main(int args, char *argv[]) {
         parseCommand(args, argv, constants, configuration);
     command();
   } catch (const std::exception &e) {
-    std::cerr << e.what();
+    printError(e.what());
     return 1;
   }
 }
