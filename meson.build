@@ -1,5 +1,19 @@
 project('zypper-declarative', 'cpp', default_options: ['cpp_std=c++23'])
 dependencies = [dependency('libzypp'), dependency('lua5.4')]
+
+initialConfig_local = custom_target('copy-data',
+  output: 'initialConfig.lua',
+  input: 'initialConfig.lua',
+  command: ['cp', '@INPUT@', '@OUTPUT@'],
+)
+
+ld = find_program('ld')
+initialConfig = custom_target('objectify-data',
+  output: 'initialConfig.o',
+  input: initialConfig_local,
+  command: [ld, '--relocatable', '--format', 'binary', '--output', '@OUTPUT@', '@INPUT@'],
+)
+
 sources = [
   'main.cpp',
   'lua.hpp',
@@ -12,5 +26,6 @@ sources = [
   'commands.cpp',
   'colors.h',
   'colors.cpp',
+  initialConfig,
 ]
 executable('zyppd', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'])

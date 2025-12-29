@@ -6,6 +6,7 @@ struct Constants {
   bool isSudo;
   std::filesystem::path configDirectory;
   std::filesystem::path configFilePath;
+  std::string initialConfig;
 };
 
 bool isSudo();

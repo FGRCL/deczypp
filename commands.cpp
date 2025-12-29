@@ -6,7 +6,9 @@
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <iostream>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -26,19 +28,27 @@
 #include <zypp/ZYppCommitPolicy.h>
 #include <zypp/ZYppFactory.h>
 
-std::function<void()> parseCommand(int args, char *argv[], Constants constants,
-                                   Configuration configuration) {
+std::function<void()> parseCommand(int args, char *argv[]) {
   if (args <= 1) {
     throw std::runtime_error("No command was passed.");
   }
 
   std::string command = argv[1];
   if (command == "install") {
+    Constants constants = getConstants();
+    Configuration configuration = readConfig(constants);
     return std::bind(install, constants.isSudo, configuration.packages);
   } else if (command == "edit") {
+    Constants constants = getConstants();
+    Configuration configuration = readConfig(constants);
     return std::bind(edit, configuration.editor, constants.configFilePath);
   } else if (command == "unmanaged") {
+    Constants constants = getConstants();
+    Configuration configuration = readConfig(constants);
     return std::bind(unmanaged);
+  } else if (command == "init") {
+    Constants constants = getConstants();
+    return std::bind(init, constants.configFilePath, constants.initialConfig);
   } else {
     throw std::runtime_error(std::format("Command \"{}\" is unknown", command));
   }
@@ -46,13 +56,7 @@ std::function<void()> parseCommand(int args, char *argv[], Constants constants,
 
 std::string getProblemsString(zypp::ResolverProblemList problemList);
 
-zypp::ZYpp initializeZypper();
-
-void install(bool isSudo, std::vector<std::string> packages) {
-  if (!isSudo) {
-    throw std::runtime_error("Needs to be run as super user (sudo).\n");
-  }
-
+zypp::ZYpp::Ptr initializeZypper() {
   zypp::ZConfig &conf = zypp::ZConfig::instance();
   zypp::RepoManager r = zypp::RepoManager(zypp::RepoManagerOptions());
   for (zypp::RepoInfo repoInfo : r.knownRepositories()) {
@@ -66,6 +70,15 @@ void install(bool isSudo, std::vector<std::string> packages) {
   z->initializeTarget(conf.systemRoot());
   z->target()->load();
   z->target()->buildCache();
+  return z;
+}
+
+void install(bool isSudo, std::vector<std::string> packages) {
+  if (!isSudo) {
+    throw std::runtime_error("Needs to be run as super user (sudo).\n");
+  }
+
+  zypp::ZYpp::Ptr z = initializeZypper();
 
   for (std::string package : packages) {
     z->resolver()->addRequire(
@@ -86,7 +99,7 @@ void install(bool isSudo, std::vector<std::string> packages) {
     throw std::runtime_error("Failed to install packages");
   }
 
-  printSuccess("Package install successful.\n");
+  printSuccess("Packages installed.\n");
 }
 
 std::string getProblemsString(zypp::ResolverProblemList problemList) {
@@ -109,26 +122,14 @@ void edit(std::string editor, std::filesystem::path configFilePath) {
   int result = std::system(
       std::format("{} {}", editor, configFilePath.string()).c_str());
 
-  printSuccess("File edit successful.\n");
+  printSuccess("Configuration edited.\n");
   if (result != 0) {
     throw std::runtime_error(std::format("Could not edit configuration file."));
   }
 }
 
 void unmanaged() {
-  zypp::ZConfig &conf = zypp::ZConfig::instance();
-  zypp::RepoManager r = zypp::RepoManager(zypp::RepoManagerOptions());
-  for (zypp::RepoInfo repoInfo : r.knownRepositories()) {
-    if (repoInfo.enabled()) {
-      r.loadFromCache(repoInfo);
-      r.buildCache(repoInfo);
-    }
-  }
-
-  zypp::ZYpp::Ptr z = zypp::getZYpp();
-  z->initializeTarget(conf.systemRoot());
-  z->target()->load();
-  z->target()->buildCache();
+  zypp::ZYpp::Ptr z = initializeZypper();
 
   std::cout << z->pool().proxy().size() << "\n";
   auto test = z->pool().proxy().byKind<zypp::Package>();
@@ -142,4 +143,17 @@ void unmanaged() {
   for (zypp::IdString id : installedPackages) {
     std::cout << id.asString() << "\n";
   }
+}
+
+void init(std::filesystem::path configFilePath, std::string initialConfig) {
+  if (std::filesystem::exists(configFilePath)) {
+    throw std::runtime_error("Config file already exists.");
+  }
+
+  std::ofstream configFile;
+  configFile.open(configFilePath);
+  configFile << initialConfig;
+
+  printSuccess(
+      std::format("Created config file at {}.", configFilePath.string()));
 }
