@@ -1,4 +1,4 @@
 # TODO
 - Push to github
-- Add config versioning
 - Fix compilation warnings
+- Fix project structure
