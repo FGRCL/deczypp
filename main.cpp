@@ -1,7 +1,5 @@
 #include "colors.h"
 #include "commands.h"
-#include "configuration.h"
-#include "constants.h"
 
 int main(int args, char *argv[]) {
   try {

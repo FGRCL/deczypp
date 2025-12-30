@@ -51,14 +51,14 @@ public:
 };
 
 template <typename T> T convert(Selector &selector, T *) {
-  static_assert(false, "Lua converter is not implemented for type");
+  static_assert(false, "Lua converter is not implemented for type.");
 }
 
 template <typename T>
 std::vector<T> convert(Selector &selector, std::vector<T> *) {
   if (!lua_istable(&selector.luaState, -1)) {
     throw std::runtime_error(std::format(
-        "Could not convert value at key [{}] to a vector. It is not a table",
+        "Could not convert value at key [{}] to a vector. It is not a table.",
         selector.getFullPath()));
   }
 
