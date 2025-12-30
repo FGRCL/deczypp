@@ -3,7 +3,7 @@ dependencies = [dependency('libzypp'), dependency('lua5.4')]
 
 initialConfig_local = custom_target('copy-data',
   output: 'initialConfig.lua',
-  input: 'initialConfig.lua',
+  input: 'resources/initialConfig.lua',
   command: ['cp', '@INPUT@', '@OUTPUT@'],
 )
 
@@ -11,23 +11,23 @@ ld = find_program('ld')
 initialConfig = custom_target('objectify-data',
   output: 'initialConfig.o',
   input: initialConfig_local,
-  command: [ld, '--relocatable', '--format', 'binary', '--output', '@OUTPUT@', '@INPUT@'],
+  command: [ld, '--relocatable', '--format', 'binary', '--output', '--z noexecstack', '@OUTPUT@', '@INPUT@'],
 )
 
 sources = [
-  'main.cpp',
-  'lua.hpp',
-  'lua.cpp',
-  'configuration.h',
-  'configuration.cpp',
-  'constants.h',
-  'constants.cpp',
-  'commands.h',
-  'commands.cpp',
-  'colors.h',
-  'colors.cpp',
-  'version.h',
-  'version.cpp',
+  'src/main.cpp',
+  'src/lua.hpp',
+  'src/lua.cpp',
+  'src/configuration.h',
+  'src/configuration.cpp',
+  'src/constants.h',
+  'src/constants.cpp',
+  'src/commands.h',
+  'src/commands.cpp',
+  'src/colors.h',
+  'src/colors.cpp',
+  'src/version.h',
+  'src/version.cpp',
   initialConfig,
 ]
-executable('zyppd', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'])
+executable('deczypp', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'])

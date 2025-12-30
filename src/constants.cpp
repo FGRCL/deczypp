@@ -8,7 +8,7 @@ bool isSudo() { return getenv("SUDO_USER"); }
 
 std::filesystem::path configDirectory(bool devMode, bool isSudo) {
   if (devMode) {
-    return std::filesystem::path("./testConfig");
+    return std::filesystem::path("./testConfigDirectory");
   }
 
   if (isSudo) {
