@@ -92,8 +92,8 @@ void install(bool isSudo, std::vector<std::string> packages) {
                     getProblemsString(z->resolver()->problems())));
   }
 
-  auto pol = zypp::ZYppCommitPolicy();
-  auto commitResult = z->commit(pol);
+  zypp::ZYppCommitPolicy pol = zypp::ZYppCommitPolicy();
+  zypp::ZYppCommitResult commitResult = z->commit(pol);
 
   if (!commitResult.noError()) {
     throw std::runtime_error("Failed to install packages");

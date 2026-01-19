@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-const Version currentVersion = Version("0.0.5");
+const Version currentVersion = Version("0.0.1");
 
 struct Configuration {
   std::string editor;

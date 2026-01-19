@@ -31,7 +31,7 @@ std::string loadInitialConfig() {
 
 Constants getConstants() {
   Constants constants{};
-  constants.devMode = true;
+  constants.devMode = false;
   constants.isSudo = isSudo();
   constants.configDirectory =
       configDirectory(constants.devMode, constants.isSudo);

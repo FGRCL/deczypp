@@ -1,4 +1,4 @@
-project('zypper-declarative', 'cpp', default_options: ['cpp_std=c++23'])
+project('dezypp', 'cpp', default_options: ['cpp_std=c++23'])
 dependencies = [dependency('libzypp'), dependency('lua5.4')]
 
 initialConfig_local = custom_target('copy-data',
@@ -30,4 +30,4 @@ sources = [
   'src/version.cpp',
   initialConfig,
 ]
-executable('deczypp', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'])
+executable('dezypp', sources: sources, dependencies: dependencies, override_options: ['cpp_std=c++23'], install: true, install_dir: '/usr/bin', install_mode: 'rwxr-xr-x')
